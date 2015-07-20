@@ -19,12 +19,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import unittest
+import testtools as tt
 
 from openstack_env import openstack_env
 
 
-class TestOpenstackEnv(unittest.TestCase):
+class TestOpenstackEnv(tt.TestCase):
     def setUp(self):
         pass
 
