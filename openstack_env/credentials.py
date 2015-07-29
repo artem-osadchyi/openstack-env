@@ -42,6 +42,7 @@ class Credentials(object):
         self._auth_url = auth_url
         self._identity = openstack.identity(self)
         self._auth_token = None
+        self._tenant_id = None
 
     @property
     def user_name(self):
@@ -71,3 +72,9 @@ class Credentials(object):
             self._auth_token = auth.get_token(keystone_session.Session(auth))
 
         return self._auth_token
+
+    @property
+    def tenant_id(self):
+        if not self._tenant_id:
+            self._tenant_id = self._identity.tenants.find(name=self.tenant).id
+        return self._tenant_id
