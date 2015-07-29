@@ -36,14 +36,20 @@ logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
 logger.addHandler(logging.StreamHandler())
 
-with open('config.json') as c:
-    config = json.load(c)
+CREDENTIALS_FILE = "credentials.json"
+RESOURCES_FILE = "resources.json"
 
-USER = config["openstack"]["user"]
-TENANT = config["openstack"]["tenant"]
-AUTH_URL = config["openstack"]["auth_url"]
-PASSWORD = config["openstack"]["password"]
-IMAGE_ENDPOINT = config["openstack"]["image_endpoint"]
+with open(CREDENTIALS_FILE) as credentials_file:
+    credentials = json.load(credentials_file)
+
+with open(RESOURCES_FILE) as resources_file:
+    resources = json.load(resources_file)
+
+USER = credentials["user"]
+TENANT = credentials["tenant"]
+AUTH_URL = credentials["auth_url"]
+PASSWORD = credentials["password"]
+IMAGE_ENDPOINT = credentials["image_endpoint"]
 
 keystone = keystone_client.Client(
     username=USER,
@@ -52,7 +58,7 @@ keystone = keystone_client.Client(
     auth_url=AUTH_URL,
 )
 TENANT_ID = keystone.tenants.find(name=TENANT).id
-SAHARA_URL = config["openstack"]["sahara_url"] + '/' + TENANT_ID
+SAHARA_URL = credentials["sahara_url"] + '/' + TENANT_ID
 
 
 def get_token(user, password):
@@ -73,7 +79,7 @@ sahara = sahara_client.Client(input_auth_token=AUTH_TOKEN, project_name=TENANT,
 
 
 def create_security_rules():
-    for rule in config["security_groups"][0]["rules"]:
+    for rule in resources["security_groups"][0]["rules"]:
         create_security_rule(rule)
 
 
@@ -92,7 +98,7 @@ def create_security_rule(rule):
 
 
 def upload_keys():
-    for key in config["keys"]:
+    for key in resources["keys"]:
         upload_key(key)
 
 
@@ -107,7 +113,7 @@ def upload_key(key):
 
 
 def create_flavors():
-    for flavor in config["flavors"]:
+    for flavor in resources["flavors"]:
         create_flavor(flavor)
 
 
@@ -139,7 +145,7 @@ def image_exists(image):
 
 
 def upload_images():
-    for image_description in config["images"]:
+    for image_description in resources["images"]:
         image = upload_image(image_description)
 
         if "user" in image_description and "tags" in image_description:
