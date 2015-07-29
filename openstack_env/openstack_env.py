@@ -71,52 +71,73 @@ sahara = sahara_client.Client(input_auth_token=AUTH_TOKEN, project_name=TENANT,
 
 def create_security_rules():
     for rule in config["security_groups"][0]["rules"]:
-        logger.info("Creating secutiry rule %s", rule)
-        nova.security_group_default_rules.create(
-            ip_protocol=rule["protocol"],
-            from_port=rule["from"],
-            to_port=rule["to"],
-            cidr=rule["cidr"],
-        )
+        create_security_rule(rule)
+
+
+def create_security_rule(rule):
+    logger.info("Creating secutiry rule %s", rule)
+    return nova.security_group_default_rules.create(
+        ip_protocol=rule["protocol"],
+        from_port=rule["from"],
+        to_port=rule["to"],
+        cidr=rule["cidr"],
+    )
 
 
 def upload_keys():
     for key in config["keys"]:
-        logger.info("Registering keypair \"%s\"", key["name"])
-        with open(key["path"]) as k:
-            nova.keypairs.create(key["name"], k.read())
+        upload_key(key)
+
+
+def upload_key(key):
+    logger.info("Registering keypair \"%s\"", key["name"])
+    with open(key["path"]) as k:
+        return nova.keypairs.create(key["name"], k.read())
 
 
 def create_flavors():
     for flavor in config["flavors"]:
-        logger.info("Creating flavor \"%s\"", flavor["name"])
-        nova.flavors.create(
-            name=flavor["name"],
-            ram=flavor["ram"],
-            vcpus=flavor["vcpus"],
-            disk=flavor["disk"],
-            flavorid=flavor["id"],
-            ephemeral=flavor["ephemeral"],
-            swap=flavor["swap"],
-            is_public=flavor["is_public"],
-        )
+        create_flavor(flavor)
+
+
+def create_flavor(flavor):
+    logger.info("Creating flavor \"%s\"", flavor["name"])
+    return nova.flavors.create(
+        name=flavor["name"],
+        ram=flavor["ram"],
+        vcpus=flavor["vcpus"],
+        disk=flavor["disk"],
+        flavorid=flavor["id"],
+        ephemeral=flavor["ephemeral"],
+        swap=flavor["swap"],
+        is_public=flavor["is_public"],
+    )
 
 
 def upload_images():
-    for image in config["images"]:
-        logger.info("Uploading image \"%s\"", image["name"])
-        glance_image = glance.images.create(
-            name=image["name"],
-            copy_from=image["url"],
-            disk_format=image["disk_format"],
-            container_format=image["container_format"],
-            is_public=image["is_public"],
-        )
-        if "user" in image and "tags" in image and image["user"] and image[
-            "tags"]:
-            logger.info("Registering image \"%s\" in Sahara", image["name"])
-            sahara.images.update_image(glance_image.id, image["user"], '')
-            sahara.images.update_tags(glance_image.id, image["tags"])
+    for image_description in config["images"]:
+        image = upload_image(image_description)
+
+        if "user" in image_description and "tags" in image_description:
+            register_image(image, image_description)
+
+
+def register_image(image, user, tags):
+    logger.info("Registering image \"%s\" in Sahara", image.name)
+    sahara.images.update_image(image.id, user, '')
+    sahara.images.update_tags(image.id, tags)
+
+
+def upload_image(image):
+    logger.info("Uploading image \"%s\"", image["name"])
+    glance_image = glance.images.create(
+        name=image["name"],
+        copy_from=image["url"],
+        disk_format=image["disk_format"],
+        container_format=image["container_format"],
+        is_public=image["is_public"],
+    )
+    return glance_image
 
 
 def main(args=None):
