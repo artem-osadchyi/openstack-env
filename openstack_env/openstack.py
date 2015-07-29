@@ -59,10 +59,13 @@ def images(credentials):
 
 
 def data_processing(credentials):
+    sahara_url = _get_url("data-processing", credentials)
+    sahara_url += "/" + credentials.tenant_id
+
     return data_processing_client.Client(
         input_auth_token=credentials.auth_token,
         project_name=credentials.tenant,
-        sahara_url=_get_url("data-processing", credentials),
+        sahara_url=sahara_url,
     )
 
 
