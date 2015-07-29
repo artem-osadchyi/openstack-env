@@ -70,9 +70,9 @@ def _get_url(service_type, credentials):
     i_client = identity(credentials)
 
     service = i_client.services.find(type=service_type)
-    endpoint = i_client.endpoints.find(id=service.id)
+    endpoint = i_client.endpoints.find(service_id=service.id)
 
-    return endpoint.url
+    return endpoint.publicurl
 
 
 class OpenStack(object):
