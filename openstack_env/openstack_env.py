@@ -28,6 +28,9 @@ from keystoneclient.auth.identity import v2 as identity
 from keystoneclient import session
 import logging
 
+import glanceclient.openstack.common.apiclient.exceptions as ge
+import novaclient.exceptions as ne
+
 logger = logging.getLogger(__name__)
 
 logger.setLevel('INFO')
@@ -76,12 +79,16 @@ def create_security_rules():
 
 def create_security_rule(rule):
     logger.info("Creating secutiry rule %s", rule)
-    return nova.security_group_default_rules.create(
-        ip_protocol=rule["protocol"],
-        from_port=rule["from"],
-        to_port=rule["to"],
-        cidr=rule["cidr"],
-    )
+
+    try:
+        return nova.security_group_default_rules.create(
+            ip_protocol=rule["protocol"],
+            from_port=rule["from"],
+            to_port=rule["to"],
+            cidr=rule["cidr"],
+        )
+    except ne.Conflict:
+        logger.warning("Security rule %s already exists!", rule)
 
 
 def upload_keys():
@@ -91,8 +98,12 @@ def upload_keys():
 
 def upload_key(key):
     logger.info("Registering keypair \"%s\"", key["name"])
-    with open(key["path"]) as k:
-        return nova.keypairs.create(key["name"], k.read())
+
+    try:
+        with open(key["path"]) as k:
+            return nova.keypairs.create(key["name"], k.read())
+    except ne.Conflict:
+        logger.warning("Keypair \"%s\" already exists!", key["name"])
 
 
 def create_flavors():
@@ -102,16 +113,29 @@ def create_flavors():
 
 def create_flavor(flavor):
     logger.info("Creating flavor \"%s\"", flavor["name"])
-    return nova.flavors.create(
-        name=flavor["name"],
-        ram=flavor["ram"],
-        vcpus=flavor["vcpus"],
-        disk=flavor["disk"],
-        flavorid=flavor["id"],
-        ephemeral=flavor["ephemeral"],
-        swap=flavor["swap"],
-        is_public=flavor["is_public"],
-    )
+
+    try:
+        return nova.flavors.create(
+            name=flavor["name"],
+            ram=flavor["ram"],
+            vcpus=flavor["vcpus"],
+            disk=flavor["disk"],
+            flavorid=flavor["id"],
+            ephemeral=flavor["ephemeral"],
+            swap=flavor["swap"],
+            is_public=flavor["is_public"],
+        )
+    except ne.Conflict:
+        logger.warning("Flavor \"%s\" already exists!", flavor["name"])
+
+
+def image_exists(image):
+    try:
+        glance.images.find(name=image["name"])
+    except ge.NotFound:
+        return False
+    else:
+        return True
 
 
 def upload_images():
@@ -130,6 +154,11 @@ def register_image(image, user, tags):
 
 def upload_image(image):
     logger.info("Uploading image \"%s\"", image["name"])
+
+    if image_exists(image):
+        logger.warning("Image \"%s\" already exists!", image["name"])
+        return
+
     glance_image = glance.images.create(
         name=image["name"],
         copy_from=image["url"],
