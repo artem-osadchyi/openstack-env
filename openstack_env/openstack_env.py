@@ -28,15 +28,10 @@ from keystoneclient.auth.identity import v2 as identity
 from keystoneclient import session
 import logging
 
+logger = logging.getLogger(__name__)
 
-def init_logger():
-    logger = logging.getLogger(__name__)
-
-    logger.setLevel('INFO')
-    logger.addHandler(logging.StreamHandler())
-
-
-init_logger()
+logger.setLevel('INFO')
+logger.addHandler(logging.StreamHandler())
 
 with open('config.json') as c:
     config = json.load(c)
@@ -76,6 +71,7 @@ sahara = sahara_client.Client(input_auth_token=AUTH_TOKEN, project_name=TENANT,
 
 def create_security_rules():
     for rule in config["security_groups"][0]["rules"]:
+        logger.info("Creating secutiry rule %s", rule)
         nova.security_group_default_rules.create(
             ip_protocol=rule["protocol"],
             from_port=rule["from"],
@@ -86,12 +82,14 @@ def create_security_rules():
 
 def upload_keys():
     for key in config["keys"]:
+        logger.info("Registering keypair \"%s\"", key["name"])
         with open(key["path"]) as k:
             nova.keypairs.create(key["name"], k.read())
 
 
 def create_flavors():
     for flavor in config["flavors"]:
+        logger.info("Creating flavor \"%s\"", flavor["name"])
         nova.flavors.create(
             name=flavor["name"],
             ram=flavor["ram"],
@@ -106,6 +104,7 @@ def create_flavors():
 
 def upload_images():
     for image in config["images"]:
+        logger.info("Uploading image \"%s\"", image["name"])
         glance_image = glance.images.create(
             name=image["name"],
             copy_from=image["url"],
@@ -115,6 +114,7 @@ def upload_images():
         )
         if "user" in image and "tags" in image and image["user"] and image[
             "tags"]:
+            logger.info("Registering image \"%s\" in Sahara", image["name"])
             sahara.images.update_image(glance_image.id, image["user"], '')
             sahara.images.update_tags(glance_image.id, image["tags"])
 
