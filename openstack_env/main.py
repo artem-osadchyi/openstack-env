@@ -18,7 +18,6 @@
 # under the License.
 
 
-import json
 import logging
 
 import glanceclient.openstack.common.apiclient.exceptions as ge
@@ -32,20 +31,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
 logger.addHandler(logging.StreamHandler())
 
-CREDENTIALS_FILE = "credentials.json"
-RESOURCES_FILE = "resources.json"
-
-with open(CREDENTIALS_FILE) as credentials_file:
-    credentials = json.load(credentials_file)
-
-with open(RESOURCES_FILE) as resources_file:
-    resources = json.load(resources_file)
-
-openstack = os.client(c.Credentials.from_dict(credentials))
+openstack = None
 
 
-def create_security_rules():
-    for rule in resources["security_groups"][0]["rules"]:
+def create_security_rules(security_rules):
+    for rule in security_rules:
         create_security_rule(rule)
 
 
@@ -63,9 +53,9 @@ def create_security_rule(rule):
         logger.warning("Security rule %s already exists!", rule)
 
 
-def upload_keys():
-    for key in resources["keys"]:
-        upload_key(key)
+def upload_keys(key_pairs):
+    for key_pair in key_pairs:
+        upload_key(key_pair)
 
 
 def upload_key(key):
@@ -78,8 +68,8 @@ def upload_key(key):
         logger.warning("Keypair \"%s\" already exists!", key["name"])
 
 
-def create_flavors():
-    for flavor in resources["flavors"]:
+def create_flavors(flavors):
+    for flavor in flavors:
         create_flavor(flavor)
 
 
@@ -110,8 +100,8 @@ def image_exists(image):
         return True
 
 
-def upload_images():
-    for image_description in resources["images"]:
+def upload_images(images):
+    for image_description in images:
         image = upload_image(image_description)
 
         if "user" in image_description and "tags" in image_description:
@@ -141,12 +131,19 @@ def upload_image(image):
     return glance_image
 
 
-def main(args=None):
-    create_security_rules()
-    upload_keys()
-    create_flavors()
-    upload_images()
+def upload(credentials, resources):
+    global openstack
 
+    openstack = os.client(c.Credentials.from_dict(credentials))
 
-if __name__ == '__main__':
-    main()
+    if "security_groups" in resources:
+        create_security_rules(resources["security_groups"][0]["rules"])
+
+    if "keys" in resources:
+        upload_keys(resources["keys"])
+
+    if "flavors" in resources:
+        create_flavors(resources["flavors"])
+
+    if "images" in resources:
+        upload_images(resources["images"])
