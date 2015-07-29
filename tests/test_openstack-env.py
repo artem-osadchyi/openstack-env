@@ -21,7 +21,7 @@
 
 import testtools as tt
 
-from openstack_env import openstack_env
+from openstack_env import main
 
 
 class TestOpenstackEnv(tt.TestCase):
