@@ -102,16 +102,7 @@ def image_exists(image):
 
 def upload_images(images):
     for image_description in images:
-        image = upload_image(image_description)
-
-        if "user" in image_description and "tags" in image_description:
-            register_image(image, image_description)
-
-
-def register_image(image, user, tags):
-    logger.info("Registering image \"%s\" in Sahara", image.name)
-    openstack.data_processing.images.update_image(image.id, user, '')
-    openstack.data_processing.images.update_tags(image.id, tags)
+        upload_image(image_description)
 
 
 def upload_image(image):
@@ -128,6 +119,14 @@ def upload_image(image):
         container_format=image["container_format"],
         is_public=image["is_public"],
     )
+
+    if "user" in image and "tags" in image:
+        logger.info("Registering image \"%s\" in Sahara", image["name"])
+        openstack.data_processing.images.update_image(
+            glance_image.id, image["user"], '')
+        openstack.data_processing.images.update_tags(
+            glance_image.id, image["tags"])
+
     return glance_image
 
 
