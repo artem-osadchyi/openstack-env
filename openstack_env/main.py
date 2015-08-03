@@ -24,6 +24,7 @@ import glanceclient.openstack.common.apiclient.exceptions as ge
 import novaclient.exceptions as ne
 
 from openstack_env import credentials as c
+from openstack_env import exceptions as e
 from openstack_env import openstack as os
 
 logger = logging.getLogger(__name__)
@@ -32,11 +33,6 @@ logger.setLevel('INFO')
 logger.addHandler(logging.StreamHandler())
 
 openstack = None
-
-
-def create_security_rules(security_rules):
-    for rule in security_rules:
-        create_security_rule(rule)
 
 
 def create_security_rule(rule):
@@ -53,11 +49,6 @@ def create_security_rule(rule):
         logger.warning("Security rule %s already exists!", rule)
 
 
-def upload_keys(key_pairs):
-    for key_pair in key_pairs:
-        upload_key(key_pair)
-
-
 def upload_key(key):
     logger.info("Registering keypair \"%s\"", key["name"])
 
@@ -66,11 +57,6 @@ def upload_key(key):
             return openstack.compute.keypairs.create(key["name"], k.read())
     except ne.Conflict:
         logger.warning("Keypair \"%s\" already exists!", key["name"])
-
-
-def create_flavors(flavors):
-    for flavor in flavors:
-        create_flavor(flavor)
 
 
 def create_flavor(flavor):
@@ -100,11 +86,6 @@ def image_exists(image):
         return True
 
 
-def upload_images(images):
-    for image_description in images:
-        upload_image(image_description)
-
-
 def upload_image(image):
     logger.info("Uploading image \"%s\"", image["name"])
 
@@ -130,19 +111,27 @@ def upload_image(image):
     return glance_image
 
 
+resource_handlers = {
+    "security_rule": create_security_rule,
+    "key_pair": upload_key,
+    "flavor": create_flavor,
+    "image": upload_image,
+}
+
+
+def upload_resource(resource):
+    resource_type = resource["type"]
+    try:
+        resource_handler = resource_handlers[resource_type]
+        return resource_handler(resource)
+    except KeyError:
+        raise e.UnsupportedResourceTypeException(resource_type)
+
+
 def upload(credentials, resources):
     global openstack
 
     openstack = os.client(c.Credentials.from_dict(credentials))
 
-    if "security_groups" in resources:
-        create_security_rules(resources["security_groups"][0]["rules"])
-
-    if "keys" in resources:
-        upload_keys(resources["keys"])
-
-    if "flavors" in resources:
-        create_flavors(resources["flavors"])
-
-    if "images" in resources:
-        upload_images(resources["images"])
+    for resource in resources:
+        upload_resource(resource)
