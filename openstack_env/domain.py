@@ -18,17 +18,17 @@
 # under the License.
 
 
-class OpenStackEnvException(Exception):
-    pass
+import abc
+
+import six
 
 
-class UnsupportedResourceTypeException(OpenStackEnvException):
-    def __init__(self, resource_type):
-        super(UnsupportedResourceTypeException, self).__init__()
-        self.resource_type = resource_type
+@six.add_metaclass(abc.ABCMeta)
+class ResourceManager(object):
+    @abc.abstractmethod
+    def supports(self, resource):
+        return
 
-
-class ResourceAlreadyExistsException(OpenStackEnvException):
-    def __init__(self, resource):
-        super(ResourceAlreadyExistsException, self).__init__()
-        self.resource = resource
+    @abc.abstractmethod
+    def upload(self, resource, client):
+        return
