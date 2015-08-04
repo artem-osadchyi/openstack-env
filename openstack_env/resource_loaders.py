@@ -27,8 +27,8 @@ from openstack_env import domain as d
 class JsonFileResourceDefinitionLoader(d.ResourceDefinitionLoader):
     def supports(self, path):
         __, extension = os.path.splitext(path)
-        return "json" == extension
+        return ".json" == extension
 
     def load(self, path):
         with open(path) as json_file:
-            return json.load(json_file)
+            return json.load(json_file)["resources"]
