@@ -88,7 +88,7 @@ class ImageResourceManager(ResourceTypeAware, d.ResourceManager):
             return True
 
     def upload(self, resource, client):
-        if self.exists(resource):
+        if self.exists(resource, client):
             raise e.ResourceAlreadyExistsException(resource)
 
         image = client.images.images.create(
@@ -98,11 +98,5 @@ class ImageResourceManager(ResourceTypeAware, d.ResourceManager):
             container_format=resource["container_format"],
             is_public=resource["is_public"],
         )
-
-        if "user" in image and "tags" in image:
-            client.data_processing.images.update_image(
-                image.id, image["user"], '')
-            client.data_processing.images.update_tags(
-                image.id, image["tags"])
 
         return image
