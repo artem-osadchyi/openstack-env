@@ -32,3 +32,14 @@ class ResourceManager(object):
     @abc.abstractmethod
     def upload(self, resource, client):
         return
+
+
+@six.add_metaclass(abc.ABCMeta)
+class ResourceDefinitionLoader(object):
+    @abc.abstractmethod
+    def supports(self, path):
+        return
+
+    @abc.abstractmethod
+    def load(self, path):
+        return

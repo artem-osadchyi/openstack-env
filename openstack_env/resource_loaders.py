@@ -18,34 +18,17 @@
 # under the License.
 
 
-from openstack_env import exceptions as e
-from openstack_env import resource_loaders as rl
-from openstack_env import resource_managers as rm
+import json
+import os.path
 
-resource_managers = [
-    rm.SecurityRuleResourceManager(),
-    rm.KeyPairResourceManager(),
-    rm.FlavorResourceManager(),
-    rm.ImageResourceManager(),
-]
+from openstack_env import domain as d
 
 
-def get_resource_manager(resource):
-    for resource_manager in resource_managers:
-        if resource_manager.supports(resource):
-            return resource_manager
+class JsonFileResourceDefinitionLoader(d.ResourceDefinitionLoader):
+    def supports(self, path):
+        __, extension = os.path.splitext(path)
+        return "json" == extension
 
-    raise e.UnsupportedResourceTypeException(resource["type"])
-
-
-resource_loaders = [
-    rl.JsonFileResourceDefinitionLoader(),
-]
-
-
-def get_resource_loader(path):
-    for resource_loader in resource_loaders:
-        if resource_loader.supports(path):
-            return resource_loader
-
-    raise e.UnsupportedResourceDefinitionTypeException(path)
+    def load(self, path):
+        with open(path) as json_file:
+            return json.load(json_file)

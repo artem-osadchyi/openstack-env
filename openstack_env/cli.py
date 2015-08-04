@@ -22,6 +22,7 @@ import argparse
 import json
 import sys
 
+from openstack_env import context
 from openstack_env import main
 
 
@@ -29,7 +30,7 @@ def _build_parser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-c", "--credentials", required=True, type=file)
-    parser.add_argument("-r", "--resources", required=True, type=file)
+    parser.add_argument("-r", "--resources", required=True)
 
     return parser
 
@@ -41,7 +42,8 @@ def run(args=None):
     args = parser.parse_args(args or sys.argv[1:])
 
     credentials = json.load(args.credentials)
-    resources = json.load(args.resources)
+    resource_loader = context.get_resource_loader(args.resources)
+    resources = resource_loader.load(args.resources)
 
     main.upload(credentials, resources)
 
