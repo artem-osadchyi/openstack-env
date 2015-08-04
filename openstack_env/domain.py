@@ -43,3 +43,8 @@ class ResourceDefinitionLoader(object):
     @abc.abstractmethod
     def load(self, path):
         return
+
+
+@six.add_metaclass(abc.ABCMeta)
+class ResourceDefinition(object):
+    pass

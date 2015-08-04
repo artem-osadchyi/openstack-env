@@ -37,7 +37,7 @@ def upload_resource(resource):
     try:
         resource_manager = context.get_resource_manager(resource)
 
-        logger.info("Creating resource \"%s\"", resource.get("name", resource))
+        logger.info("Creating resource \"%s\"", resource)
         return resource_manager.upload(resource, openstack)
     except e.OpenStackEnvException as ex:
         logging.warning(ex.message)

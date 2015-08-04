@@ -22,6 +22,7 @@ import json
 import os.path
 
 from openstack_env import domain as d
+from openstack_env import resources as r
 
 
 class JsonFileResourceDefinitionLoader(d.ResourceDefinitionLoader):
@@ -31,4 +32,61 @@ class JsonFileResourceDefinitionLoader(d.ResourceDefinitionLoader):
 
     def load(self, path):
         with open(path) as json_file:
-            return json.load(json_file)["resources"]
+            items = json.load(json_file)["resources"]
+
+        return [self.parse(item) for item in items]
+
+    def parse(self, item):
+        if item["type"] == "security_rule":
+            return self.parse_security_rule(item)
+
+        if item["type"] == "key_pair":
+            return self.parse_key_pair(item)
+
+        if item["type"] == "flavor":
+            return self.parse_flavor(item)
+
+        if item["type"] == "image":
+            return self.parse_image(item)
+
+        if item["type"] == "dp_image":
+            return self.parse_data_processing_image(item)
+
+    def parse_security_rule(self, item):
+        return r.SecurityRuleResourceDefinition(
+            protocol=item["protocol"],
+            from_port=item["from"],
+            to_port=item["to"],
+            cidr=item["cidr"],
+        )
+
+    def parse_key_pair(self, item):
+        return r.KeyPairResourceDefinition(
+            name=item["name"],
+            path=item["path"],
+        )
+
+    def parse_flavor(self, item):
+        return r.FlavorResourceDefinition(
+            name=item["name"],
+            ram_size=item["ram"],
+            cpu_count=item["vcpus"],
+            disk_size=item["disk"],
+            id=item["id"],
+            ephemeral_disk_size=item["ephemeral"],
+            swap_size=item["swap"],
+            is_public=item["is_public"],
+        )
+
+    def parse_image(self, item):
+        return r.ImageResourceDefinition(
+            name=item["name"],
+            url=item["url"],
+            disk_format=item["disk_format"],
+            container_format=item["container_format"],
+            is_public=item["is_public"],
+        )
+
+    def parse_data_processing_image(self, item):
+        # TODO: Implement
+        raise NotImplementedError()

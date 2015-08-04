@@ -33,8 +33,7 @@ class ResourceAlreadyExistsException(OpenStackEnvException):
         super(ResourceAlreadyExistsException, self).__init__()
         self.resource = resource
 
-        resource_name = resource.get("name", resource)
-        self.message = "Resource \"%s\" already exists!" % resource_name
+        self.message = "Resource \"%s\" already exists!" % resource
 
 
 class UnsupportedResourceDefinitionTypeException(OpenStackEnvException):
