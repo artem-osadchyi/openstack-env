@@ -18,35 +18,20 @@
 # under the License.
 
 
-import logging
-
-from openstack_env import context
-from openstack_env import credentials as c
 from openstack_env import exceptions as e
-from openstack_env import openstack as os
+from openstack_env import resource_managers as rm
 
-logger = logging.getLogger(__name__)
-
-logger.setLevel('INFO')
-logger.addHandler(logging.StreamHandler())
-
-openstack = None
-
-
-def upload_resource(resource):
-    try:
-        resource_manager = context.get_resource_manager(resource)
-
-        logger.info("Creating resource \"%s\"", resource["name"])
-        return resource_manager.upload(resource, openstack)
-    except e.OpenStackEnvException as ex:
-        logging.warning(ex)
+resource_managers = [
+    rm.SecurityRuleResourceManager(),
+    rm.KeyPairResourceManager(),
+    rm.FlavorResourceManager(),
+    rm.ImageResourceManager(),
+]
 
 
-def upload(credentials, resources):
-    global openstack
+def get_resource_manager(resource):
+    for resource_manager in resource_managers:
+        if resource_manager.supports(resource):
+            return resource_manager
 
-    openstack = os.client(c.Credentials.from_dict(credentials))
-
-    for resource in resources:
-        upload_resource(resource)
+    raise e.UnsupportedResourceTypeException(resource["type"])
