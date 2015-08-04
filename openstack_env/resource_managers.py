@@ -30,7 +30,7 @@ class ResourceTypeAware(object):
         return resource["type"] == self.type
 
 
-class SecurityRuleResourceManager(d.ResourceManager, ResourceTypeAware):
+class SecurityRuleResourceManager(ResourceTypeAware, d.ResourceManager):
     type = "security_rule"
 
     def upload(self, resource, client):
@@ -45,7 +45,7 @@ class SecurityRuleResourceManager(d.ResourceManager, ResourceTypeAware):
             raise e.ResourceAlreadyExistsException(resource)
 
 
-class KeyPairResourceManager(d.ResourceManager, ResourceTypeAware):
+class KeyPairResourceManager(ResourceTypeAware, d.ResourceManager):
     type = "key_pair"
 
     def upload(self, resource, client):
@@ -57,7 +57,7 @@ class KeyPairResourceManager(d.ResourceManager, ResourceTypeAware):
             raise e.ResourceAlreadyExistsException(resource)
 
 
-class FlavorResourceManager(d.ResourceManager, ResourceTypeAware):
+class FlavorResourceManager(ResourceTypeAware, d.ResourceManager):
     type = "flavor"
 
     def upload(self, resource, client):
@@ -76,7 +76,7 @@ class FlavorResourceManager(d.ResourceManager, ResourceTypeAware):
             raise e.ResourceAlreadyExistsException(resource)
 
 
-class ImageResourceManager(d.ResourceManager, ResourceTypeAware):
+class ImageResourceManager(ResourceTypeAware, d.ResourceManager):
     type = "image"
 
     def exists(self, resource, client):
