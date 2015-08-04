@@ -30,7 +30,7 @@ def _build_parser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-c", "--credentials", required=True, type=file)
-    parser.add_argument("-r", "--resources", required=True)
+    parser.add_argument("-r", "--resources", required=True, nargs="+")
 
     return parser
 
@@ -38,12 +38,21 @@ def _build_parser():
 parser = _build_parser()
 
 
+def _read_resources(paths):
+    resources = []
+
+    for path in paths:
+        resource_loader = context.get_resource_loader(path)
+        resources += resource_loader.load(path)
+
+    return resources
+
+
 def run(args=None):
     args = parser.parse_args(args or sys.argv[1:])
 
     credentials = json.load(args.credentials)
-    resource_loader = context.get_resource_loader(args.resources)
-    resources = resource_loader.load(args.resources)
+    resources = _read_resources(args.resources)
 
     main.upload(credentials, resources)
 
