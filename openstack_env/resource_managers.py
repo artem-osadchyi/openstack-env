@@ -18,6 +18,8 @@
 # under the License.
 
 
+import time
+
 import glanceclient.openstack.common.apiclient.exceptions as ge
 import novaclient.exceptions as ne
 
@@ -100,4 +102,20 @@ class ImageResourceManager(ResourceTypeAware, d.ResourceManager):
             is_public=resource.is_public,
         )
 
+        self.wait_for_status(image, "active", client)
+
         return image
+
+    def get_status(self, image, client):
+        return client.images.images.get(image.id).status
+
+    def wait_for_status(self, image, status, client, timeout=3600, period=10):
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            if self.get_status(image, client) == status:
+                return
+
+            time.sleep(period)
+
+        raise e.TimeoutException()

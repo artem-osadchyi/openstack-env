@@ -41,3 +41,7 @@ class UnsupportedResourceDefinitionTypeException(OpenStackEnvException):
         super(UnsupportedResourceDefinitionTypeException, self).__init__()
         self.message = "Unsupported resource definition source \"%s\"" % path
         self.path = path
+
+
+class TimeoutException(OpenStackEnvException):
+    pass
